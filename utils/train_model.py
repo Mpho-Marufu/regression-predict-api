@@ -75,7 +75,7 @@ y = traindata.iloc[:, -1].values
 X_train, X_cross, y_train, y_cross = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
 # Fit model
-regressor = RandomForestRegressor(n_estimators = 200, random_state = 0)
+regressor = RandomForestRegressor(n_estimators = 75, random_state = 0)
 print ("Training Model...")
 regressor.fit(X_train, y_train)
 
