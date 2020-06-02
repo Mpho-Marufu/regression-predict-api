@@ -59,11 +59,54 @@ def _preprocess_data(data):
     # ---------------------------------------------------------------
 
     # ----------- Replace this code with your own preprocessing steps --------
-    predict_vector = feature_vector_df[['Pickup Lat','Pickup Long',
-                                        'Destination Lat','Destination Long']]
+
+    # Imputing missing values and scaling values
+    from sklearn.impute import SimpleImputer
+    from sklearn.preprocessing import MinMaxScaler
+    from sklearn.preprocessing import LabelEncoder
+
+    test_data = feature_vector_df.copy()
+    test_data['Precipitation in millimeters'].fillna(value=0, inplace=True)
+    imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
+    imputer.fit(test_data[["Temperature"]])
+    test_data["Temperature"]=imputer.transform(test_data[["Temperature"]]).ravel()
+
+    #Change time to float
+    test_data['Arrival at Pickup - Time'] = pd.to_timedelta(test_data['Arrival at Pickup - Time'])
+    test_data['Arrival at Pickup - Time'] = test_data['Arrival at Pickup - Time'] / pd.offsets.Minute(60)
+    test_data['Placement - Time'] = pd.to_timedelta(test_data['Placement - Time'])
+    test_data['Placement - Time'] = test_data['Placement - Time'] / pd.offsets.Minute(60)
+    test_data['Confirmation - Time'] = pd.to_timedelta(test_data['Confirmation - Time'])
+    test_data['Confirmation - Time'] = test_data['Confirmation - Time'] / pd.offsets.Minute(60)
+    test_data['Pickup - Time'] = pd.to_timedelta(test_data['Pickup - Time'])
+    test_data['Pickup - Time'] = test_data['Pickup - Time'] / pd.offsets.Minute(60)
+
+    #Change time to x,y to rightfully reflect a cycle form
+    test_data['Arrival at Pickup - time_x']=np.sin(2.*np.pi*test_data['Arrival at Pickup - Time']/24.)
+    test_data['Arrival at Pickup - time_y']=np.cos(2.*np.pi*test_data['Arrival at Pickup - Time']/24.)
+    test_data['Placement_time_x']=np.sin(2.*np.pi*test_data['Placement - Time']/24.)
+    test_data['Placement_time_y']=np.cos(2.*np.pi*test_data['Placement - Time']/24.)
+    test_data['Confirmation - time_x']=np.sin(2.*np.pi*test_data['Confirmation - Time']/24.)
+    test_data['Confirmation - time_y']=np.cos(2.*np.pi*test_data['Confirmation - Time']/24.)
+    test_data['Pickup - time_x']=np.sin(2.*np.pi*test_data['Pickup - Time']/24.)
+    test_data['Pickup - time_y']=np.cos(2.*np.pi*test_data['Pickup - Time']/24.)
+
+    test_data.drop(['Arrival at Pickup - Time', 'Placement - Time', 'Confirmation - Time', 'Pickup - Time'], axis=1, inplace=True)
+    test_data.drop(['Order No', 'User Id', 'Vehicle Type', 'Rider Id'], axis = 1, inplace = True)
+    
+    le = LabelEncoder()
+    test_data['Personal or Business'] = le.fit_transform(test_data['Personal or Business'])
+
+    test_data['Platform Type'] = test_data['Platform Type'].replace([1, 2, 3, 4], ['Type_1', 'Type_2', 'Type_3', 'Type_4'])
+    testdata = pd.get_dummies(test_data, drop_first=True)
+
+    testdata.drop('No_of_Ratings', axis=1, inplace=True)
+    testdata.drop(['Arrival at Pickup - time_x', 'Arrival at Pickup - time_y', 'Arrival at Pickup - Day of Month', 'Arrival at Pickup - Weekday (Mo = 1)'], axis=1, inplace=True)
+    testdata.drop(['Placement - Day of Month', 'Pickup - Day of Month', 'Placement - Weekday (Mo = 1)', 'Pickup - Weekday (Mo = 1)'], axis=1, inplace=True)
+
     # ------------------------------------------------------------------------
 
-    return predict_vector
+    return testdata
 
 def load_model(path_to_model:str):
     """Adapter function to load our pretrained model into memory.
