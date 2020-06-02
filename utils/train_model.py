@@ -80,6 +80,7 @@ print ("Training Model...")
 regressor.fit(X_train, y_train)
 
 # Pickle model for use within our API
-save_path = 'randomforest_model.pkl'
+
+save_path = '../assets/trained-models/randomforest_model.pkl'
 print (f"Training completed. Saving model to: {save_path}")
 pickle.dump(regressor, open(save_path,'wb'))
